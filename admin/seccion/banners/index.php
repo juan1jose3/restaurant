@@ -1,10 +1,18 @@
 <?php
-$url_base = "http://localhost/Restaurante/admin/";
 include("../../bd.php");
-
 $sentencia=$pdo->prepare("SELECT * FROM banner;");
 $sentencia->execute();
 $resultado=$sentencia->fetchAll(PDO::FETCH_ASSOC);
+
+if(isset($_GET["txtID"])){
+    $txtID=(isset($_GET["txtID"]))?$_GET["txtID"]:"";
+
+    $borrar=$pdo->prepare("DELETE FROM banner WHERE id=:id");
+    
+    $borrar->bindParam(":id", $txtID);
+    $borrar->execute();
+    header("Location:index.php");
+}
 ?>
 
 <!doctype html>
@@ -59,8 +67,8 @@ $resultado=$sentencia->fetchAll(PDO::FETCH_ASSOC);
                                     <td><?php echo $value["descripcion"];?></td>
                                     <td><?php echo $value["link"];?></td>
                                     <td>
-                                        <a name="" id="" class="btn btn-info" href="#" role="button">Editar</a>
-                                        <a name="" id="" class="btn btn-danger" href="#" role="button">Borrar</a>
+                                        <a name="" id="" class="btn btn-info" href="editar.php?txtID=<?php echo $value["id"]; ?>" role="button">Editar</a>
+                                        <a name="" id="" class="btn btn-danger" href="index.php?txtID= <?php echo $value["id"];?>" role="button">Borrar</a>
                                     </td>
                                 </tr>
                                 <?php endforeach; ?>

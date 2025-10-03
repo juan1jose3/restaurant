@@ -1,3 +1,31 @@
+<?php
+include("../../bd.php");
+include("../../templates/header.php");
+
+if($_POST){
+    $titulo = isset($_POST["titulo"]) ? $_POST["titulo"] : "";
+    $descripcion = isset($_POST["Descripcion"]) ? $_POST["Descripcion"] : "";
+    $enlace = isset($_POST["Enlace"]) ? $_POST["Enlace"] : "";
+
+    
+
+    //print_r($titulo);
+    //print_r($descripcion);
+    //print_r($enlace);
+
+    $sentencia = $pdo->prepare("INSERT INTO banner (titulo,descripcion,link) VALUES (:titulo, :descripcion, :enlace);");
+    $sentencia->bindParam(":titulo" , $titulo);
+    $sentencia->bindParam(":descripcion" , $descripcion);
+    $sentencia->bindParam(":enlace", $enlace);
+    $sentencia->execute();
+    header("Location:index.php");
+
+
+}
+
+
+?>
+
 <!doctype html>
 <html lang="en">
     <head>
@@ -19,9 +47,6 @@
     </head>
 
     <body>
-        <header>
-            <?php include("../../templates/header.php");?>
-        </header>
         <main>
             <div class="card">
                 <div class="card-header">Banners</div>

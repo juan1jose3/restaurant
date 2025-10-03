@@ -1,3 +1,35 @@
+<?php
+session_start();
+include("bd.php");
+
+if ($_SERVER["REQUEST_METHOD"] === "POST") {
+    $usuario   = trim($_POST['usuario'] ?? "");
+    $password  = trim($_POST['password'] ?? "");
+
+    if ($usuario === "" || $password === "") {
+        echo "<div class='alert alert-danger'>Por favor complete todos los campos.</div>";
+    } else {
+
+        $stmt = $pdo->prepare("SELECT * FROM usuarios WHERE usuario = :usuario LIMIT 1");
+        $stmt->bindParam(":usuario", $usuario);
+        $stmt->execute();
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    
+        if ($user && $password === $user["password"]) {
+            $_SESSION['usuario'] = $user['usuario'];
+            header("Location: index.php"); 
+            exit;
+        } else {
+            echo "<div class='alert alert-danger'>Usuario o contraseña incorrectos.</div>";
+        }
+    }
+}
+?>
+
+
+
+
 <!doctype html>
 <html lang="en">
 
@@ -21,7 +53,7 @@
     <header>
         <!-- place navbar here -->
     </header>
-    
+
     <main>
 
         <div class="container">
@@ -36,23 +68,23 @@
                                 <div class="mb-3 row">
                                     <label for="inputName" class="col-4 col-form-label">Usuario</label>
                                     <div class="col-8">
-                                        <input type="text" class="form-control" id="inputName" placeholder="Ingrese su usuario">
+                                        <input type="text" class="form-control" id="inputName" name="usuario" placeholder="Ingrese su usuario" required>
                                     </div>
                                 </div>
                                 <div class="mb-3 row">
                                     <label for="inputPass" class="col-4 col-form-label">Contraseña</label>
                                     <div class="col-8">
-                                         <input type="password" class="form-control" id="inputPass" placeholder="Ingrese su contraseña">
+                                        <input type="password" class="form-control" id="inputPass" name="password" placeholder="Ingrese su contraseña" required>
                                     </div>
                                 </div>
 
                                 <div class="mb-3 row">
                                     <div class="offset-sm-4 col-sm-8">
-                                        <button type="submit" class="form-control" name="pass" id="pass">Ingresar</button>
+                                        <button type="submit" class="form-control btn btn-primary" name="login">Ingresar</button>
                                     </div>
-
                                 </div>
                             </form>
+
                         </div>
                     </div>
                 </div>

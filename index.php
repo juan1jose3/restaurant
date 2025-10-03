@@ -1,3 +1,59 @@
+<?php
+include("admin/bd.php");
+$query = "SELECT * FROM eventos";
+$resultado = $pdo->query($query);
+
+$eventos = [];
+while ($row = $resultado->fetch(PDO::FETCH_ASSOC)) {
+    $eventos[] = $row;
+}
+
+
+shuffle($eventos);
+
+
+$sentencia = $pdo->prepare("SELECT * FROM banner LIMIT 1");
+$sentencia->execute();
+$listaBanner = $sentencia->fetchAll(PDO::FETCH_ASSOC);
+
+$chef1 = $pdo->prepare("SELECT * FROM chef");
+$chef1->execute();
+$chefLista1 = $chef1->fetchAll(PDO::FETCH_ASSOC);
+
+
+$testimonios = $pdo->prepare("SELECT * FROM testimonios");
+$testimonios->execute();
+$testimoniosList = $testimonios->fetchAll(PDO::FETCH_ASSOC);
+
+$platos = $pdo->prepare("SELECT * FROM menu");
+$platos->execute();
+$menuLista = $platos->fetchAll(PDO::FETCH_ASSOC);
+
+$reservasStmt = $pdo->prepare("SELECT mesa, estado FROM reservas");
+$reservasStmt->execute();
+$reservasList = $reservasStmt->fetchAll(PDO::FETCH_ASSOC);
+
+
+// Reservas
+$sentencia = $pdo->prepare("SELECT * FROM reservas WHERE estado = 1");
+$sentencia->execute();
+$reservasActivas = $sentencia->fetchAll(PDO::FETCH_ASSOC);
+
+
+$totalMesas = 10;
+$columnas = 5;
+$filas = ceil($totalMesas / $columnas);
+$mesasArray = array_fill(0, $filas, array_fill(0, $columnas, 0));
+
+
+foreach ($reservasActivas as $reserva) {
+    $fila = floor(($reserva['mesa'] - 1) / $columnas);
+    $col = ($reserva['mesa'] - 1) % $columnas;
+    $mesasArray[$fila][$col] = 1;
+}
+?>
+
+
 <!doctype html>
 <html lang="en">
 
@@ -15,6 +71,7 @@
         rel="stylesheet"
         integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN"
         crossorigin="anonymous" />
+    <link rel="stylesheet" href="styles/main.css">
 
 
 </head>
@@ -35,6 +92,10 @@
                     <li class="nav-item">
                         <a class="nav-item nav-link active" href="#banner" aria-current="page">Inicio<span class="visually-hidden">(current)</span></a>
                     </li>
+
+                    <li class="nav-item">
+                         <a class="nav-item nav-link active" href="#evento-destacado" aria-current="page">Eventos<span class="visually-hidden">(current)</span></a>
+                    </li>
                     <li class="nav-item">
                         <a class="nav-link" href="#Chef">Chef</a>
                     </li>
@@ -48,8 +109,13 @@
                     </li>
 
                     <li class="nav-item">
+                         <a class="nav-item nav-link active" href="#mapa-mesas" aria-current="page">Reservas<span class="visually-hidden">(current)</span></a>
+                    </li>
+
+                    <li class="nav-item">
                         <a class="nav-link" href="#contacto">Contacto</a>
                     </li>
+
                 </ul>
 
             </div>
@@ -63,23 +129,44 @@
     <section id="banner" class="container-fluid p-0">
         <div class="banner-img" style="position:relative; background:url('images/stake2.jpg') center/cover no-repeat; height: 400px;">
             <div class="banner-text" style="position:absolute; top:50%; left: 50%; transform:translate(-50%, -50%); text-align:center;">
-                <h1>Restaurante Juan Jo</h1>
-                <p>Bienvenido a nuestro Restaurante</p>
-                <a href="#menu" class="btn btn-primary">Ver menú</a>
+                <?php foreach ($listaBanner as $banner): ?>
+
+                    <h1><?php echo $banner["titulo"]; ?></h1>
+                    <p><?php echo $banner["descripcion"] ?></p>
+                    <a href="<?php echo $banner["link"] ?>" class="btn btn-primary">Ver menú</a>
+                <?php endforeach ?>
             </div>
 
         </div>
 
     </section>
     <br>
-    <div class="d-flex justify-content-center">
-        <div class="card text-white bg-dark mb-3 w-75">
-            <div class="card-body">
-                <h1 class="card-title" style="text-align: center;">Bienvenidos a su restaurante tipico</h1>
-                <h4 class="card-text" style="text-align: center;">Recuerda que por la compra de 6, llevas 6 y pagas 4!</h4>
+
+
+    <?php if (!empty($eventos)): ?>
+        <?php $evento = $eventos[0]; ?>
+        <?php $imgPath = "/restaurant/" . $evento['imagen']; ?>
+
+
+
+        <section id="evento-destacado" class="container-fluid p-0 my-5">
+            <div class="evento-hero"
+                style="position: relative; background: url('<?php echo htmlspecialchars($imgPath); ?>') center/cover no-repeat; height: 500px; border-radius: 20px; overflow:hidden;">
+
+
+                <div style="position:absolute; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.5);"></div>
+
+
+                <div class="evento-text text-white text-center"
+                    style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); max-width:700px; padding:20px;">
+                    <h2 class="fw-bold display-5"><?php echo htmlspecialchars($evento['titulo']); ?></h2>
+                    <p class="lead"><?php echo htmlspecialchars($evento['descripcion']); ?></p>
+                    <p><strong><?php echo htmlspecialchars($evento['fecha']); ?></strong></p>
+                </div>
             </div>
-        </div>
-    </div>
+        </section>
+    <?php endif; ?>
+
 
 
     <br>
@@ -88,55 +175,52 @@
         <h2>Nuestros Chefs</h2>
         <br>
         <div class="row row-cols-3 row-cols-md-d g-4">
-            <div class="col d-flex justify-content-center">
-                <div class="card h-100">
-                    <img src="images/chef1.jpg" alt="Chef1" style="max-width:400px; border-radius:9px">
-                    <div class="card-body">
-                        <h5 class="card-title">Pedro José</h5>
-                        <p class="card-text small"><strong>Experto en comida mediterránea</strong></p>
-                        <div>
-                            <img src="images/instagram.svg" alt="insta">
-                            <img src="images/whatsapp.svg" alt="whatsapp">
-                            <img src="images/facebook.svg" alt="face">
+            <?php foreach ($chefLista1 as $chef): ?>
+                <div class="col d-flex justify-content-center">
+                    <div class="card h-100">
+
+
+                        <img src="images/<?php echo $chef["foto"]; ?>" alt="Chef1" style="max-width:500px; border-radius:9px">
+                        <div class="card-body">
+
+                            <h5 class="card-title"><?php echo $chef["nombre"]; ?></h5>
+                            <p class="card-text small"><strong><?php echo $chef["descripcion"]; ?></strong></p>
+                            <div>
+                                <?php if (!empty($chef['linkinstagram'])): ?>
+                                    <a href="<?php echo htmlspecialchars($chef['linkinstagram']); ?>"
+                                        target="_blank" rel="noopener">
+                                        <img src="images/instagram.svg" alt="insta" style="width:24px">
+                                    </a>
+                                <?php endif; ?>
+
+                                <?php if (!empty($chef['linkyoutube'])): ?>
+                                    <a href="<?php echo htmlspecialchars($chef['linkyoutube']); ?>"
+                                        target="_blank" rel="noopener">
+                                        <img src="images/youtube.svg" alt="youtube" style="width:24px">
+                                    </a>
+                                <?php endif; ?>
+
+                                <?php if (!empty($chef['linkfacebook'])): ?>
+                                    <a href="<?php echo htmlspecialchars($chef['linkfacebook']); ?>"
+                                        target="_blank" rel="noopener">
+                                        <img src="images/facebook.svg" alt="face" style="width:24px">
+                                    </a>
+                                <?php endif; ?>
+                            </div>
+
                         </div>
+
+
                     </div>
+
                 </div>
-
-            </div>
-
-            <div class="col d-flex">
-                <div class="card h-100">
-                    <img src="images/chefNew.jpg" alt="Chef2" style="max-width:400px; border-radius:9px">
-                    <div class="card-body">
-                        <h5 class="card-title">Pedro José</h5>
-                        <p class="card-text small"><strong>Experto en comida mediterránea</strong></p>
-                        <div>
-                            <img src="images/instagram.svg" alt="insta">
-                            <img src="images/whatsapp.svg" alt="whatsapp">
-                            <img src="images/facebook.svg" alt="face">
-                        </div>
-                    </div>
-                </div>
-
-            </div>
-
-            <div class="col d-flex">
-                <div class="card h-100">
-                    <img src="images/cheff3.jpg" alt="Chef3" style="max-width:400px; border-radius:9px">
-                    <div class="card-body">
-                        <h5 class="card-title">Pedro José</h5>
-                        <p class="card-text small"><strong>Experto en comida mediterránea</strong></p>
-                        <div>
-
-                            <img src="images/instagram.svg" alt="insta">
-                            <img src="images/whatsapp.svg" alt="whatsapp">
-                            <img src="images/facebook.svg" alt="face">
-                        </div>
-                    </div>
-                </div>
-
-            </div>
+            <?php endforeach ?>
         </div>
+
+
+        </div>
+        </div>
+
 
 
 
@@ -146,91 +230,55 @@
     <section id="testimonios" class="bg-light py-5">
         <div class="container">
 
+
             <h2 class="text-center mb-4">Testimonios</h2>
 
             <div class="row">
+                <?php foreach ($testimoniosList as $testimonio): ?>
 
-                <div class="col-md-6 d-flex">
-                    <div class="card mb-4 w-100">
-                        <div class="card-body">
-                            <p class="card-text">Sirven muy buena comida</p>
-                        </div>
-                        <div class="card-footer text-muted">
-                            Oscar Jimenez
+                    <div class="col-md-6 d-flex">
+                        <div class="card mb-4 w-100">
+                            <div class="card-body">
+                                <p class="card-text"><?php echo $testimonio["opinion"] ?></p>
+                            </div>
+                            <div class="card-footer text-muted">
+                                <?php echo $testimonio["nombre"] ?>
+                            </div>
                         </div>
                     </div>
-                </div>
-
-                <div class="col-md-6 d-flex">
-                    <div class="card mb-4 w-100">
-                        <div class="card-body">
-                            <p class="card-text">Muy buena atención</p>
-                        </div>
-                        <div class="card-footer text-muted">
-                            Pedro Mondragon
-                        </div>
-                    </div>
-                </div>
+                <?php endforeach ?>
 
             </div>
+
         </div>
 
     </section>
 
     <section id="menu">
-        <h2 class="text-center">Recomendados</h2>
-        <br>
-        <div class="row row-cols-4 row-cols-md-d g-4">
-            <div class="col d-flex">
-                <div class="card h-100">
-                    <img src="images/bandeja.jpg" alt="Bandeja Paisa" style="max-width:400px">
-                    <div class="card-body">
-                        <h5 class="card-title">Bandeja Paisa</h5>
-                        <p class="card-text small"><strong>Ingredientes: </strong>Arroz,Arepa,Chicharon</p>
-                        <p class="card-text"><strong>Precio: </strong>22000<strong>$</strong></p>
+        <div class="container">
+            <h2 class="text-center">Recomendados</h2>
+            <br>
+            <div class="row row-cols-1 row-cols-md-3 g-4">
+                <?php foreach ($menuLista as $menu): ?>
+                    <div class="col d-flex justify-content-center">
+
+                        <div class="card h-100">
+                            <img src="images/<?php echo $menu["foto"] ?>" alt="Bandeja Paisa" class="card-img-top rounded-3">
+                            <div class="card-body">
+                                <h5 class="card-title"><?php echo $menu["nombre"] ?></h5>
+                                <p class="card-text small"><strong>Ingredientes: </strong><?php echo $menu["ingredientes"] ?></p>
+                                <p class="card-text"><strong>Precio: </strong><?php echo $menu["precio"] ?><strong>$</strong></p>
+                            </div>
+                        </div>
+
+
                     </div>
-                </div>
-
-            </div>
-
-
-            <div class="col d-flex">
-                <div class="card h-100">
-                    <img src="images/bandeja.jpg" alt="Bandeja Paisa" style="max-width:400px">
-                    <div class="card-body">
-                        <h5 class="card-title">Bandeja Paisa</h5>
-                        <p class="card-text small"><strong>Ingredientes: </strong>Arroz,Arepa,Chicharon</p>
-                        <p class="card-text"><strong>Precio: </strong>22000<strong>$</strong></p>
-                    </div>
-                </div>
-
-            </div>
-
-            <div class="col d-flex">
-                <div class="card h-100">
-                    <img src="images/bandeja.jpg" alt="Bandeja Paisa" style="max-width:400px">
-                    <div class="card-body">
-                        <h5 class="card-title">Bandeja Paisa</h5>
-                        <p class="card-text small"><strong>Ingredientes: </strong>Arroz,Arepa,Chicharon</p>
-                        <p class="card-text"><strong>Precio: </strong>22000<strong>$</strong></p>
-                    </div>
-                </div>
-
-            </div>
-
-            <div class="col d-flex">
-                <div class="card h-100">
-                    <img src="images/bandeja.jpg" alt="Bandeja Paisa" style="max-width:400px">
-                    <div class="card-body">
-                        <h5 class="card-title">Bandeja Paisa</h5>
-                        <p class="card-text small"><strong>Ingredientes: </strong>Arroz,Arepa,Chicharon</p>
-                        <p class="card-text"><strong>Precio: </strong>22000<strong>$</strong></p>
-                    </div>
-                </div>
+                <?php endforeach ?>
 
             </div>
 
         </div>
+
     </section>
 
     <section id="Horarios" class="ms-4 mt-4">
@@ -253,17 +301,42 @@
 
     </section>
 
+
+    <section id="mapa-mesas" class="container mt-5">
+        <h2 class="text-center mb-4">Estado de Mesas</h2>
+        <?php for ($f = 0; $f < $filas; $f++): ?>
+            <div class="row justify-content-center mb-2">
+                <?php for ($c = 0; $c < $columnas; $c++): ?>
+                    <?php
+                    $numMesa = $f * $columnas + $c + 1;
+                    if ($numMesa > $totalMesas) continue;
+                    ?>
+                    <div class="col-auto">
+                        <div class="card text-center"
+                            style="width: 100px; height: 100px; 
+                                background-color: <?= ($mesasArray[$f][$c]) ? '#dc3545' : '#198754' ?>;
+                                color: white; display:flex; align-items:center; justify-content:center;">
+                            Mesa <?= $numMesa ?><br>
+                            <?= ($mesasArray[$f][$c]) ? 'Ocupada' : 'Libre' ?>
+                        </div>
+                    </div>
+                <?php endfor; ?>
+            </div>
+        <?php endfor; ?>
+    </section>
+
+
+
     <section id="contacto" class="container mt-4"><br>
         <h2>Contacto</h2>
         <p>Para cualquier consulta o pedido, no dudes en contactarte con nosotros.</p>
-        <form action="?" method="POST">
+        <form action="admin/seccion/comentarios/crear.php" method="POST">
 
 
             <div class="form-group">
                 <label for="nombre">Nombre: </label>
                 <input type="text" class="form-control" id="nombre" name="nombre" placeholder="Ingrese su nombre"><br>
-                <input type="email" class="form-control" id="email" name="email" placeholder="Ingrese su correo electrónico"><br>
-                <input type="text" name="form-control" id="telefono" name="telefono" placeholder="Ingrese su número de teléfono"><br>
+                <input type="email" class="form-control" id="correo" name="correo" placeholder="Ingrese su correo electrónico" required><br>
                 <div class="mb-3">
                     <label for="Mensaje" class="form-label">Mensaje</label>
                     <textarea class="form-control" id="mensaje" name="mensaje" rows="6" placeholder="Escriba su mensaje"></textarea>

@@ -30,12 +30,12 @@
             <div class="h-100 p-5 border rounded-3">
                 <h2>Bienvenido al Administrador del sitio</h2>
                 <p>
-                    Este espacop es para administrar su sitio web
+                    Este espacio es para administrar su sitio web
                 </p>
 
-                <button class="btn btn-outline-primary" type="button">
+                <a class="btn btn-outline-primary" href="seccion/banners/index.php">
                     Iniciar ahora
-                </button>
+                </a>
 
             </div>
         </div>
