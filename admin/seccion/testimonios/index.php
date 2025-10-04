@@ -32,6 +32,7 @@ if(isset($_GET["txtID"])){
         rel="stylesheet"
         integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN"
         crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
 </head>
 
 <body>
@@ -55,6 +56,7 @@ if(isset($_GET["txtID"])){
                                     <th scope="col">ID</th>
                                     <th scope="col">Opinion</th>
                                     <th scope="col">nombre</th>
+                                    <th scope="col">Fecha reseña</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -63,6 +65,7 @@ if(isset($_GET["txtID"])){
                                     <td><?php echo $value["id"];?></td>
                                     <td><?php echo $value["opinion"];?></td>
                                     <td><?php echo $value["nombre"];?></td>
+                                    <td><?php echo $value["fecha_insercion"];?></td>
                                     
                                     <td>
                                         <a name="" id="" class="btn btn-info" href="editar.php?txtID=<?php echo $value["id"]; ?>" role="button">Editar</a>

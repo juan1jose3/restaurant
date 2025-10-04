@@ -140,7 +140,7 @@ foreach ($reservasActivas as $reserva) {
         </div>
 
     </section>
-    <br>
+    
 
 
     <?php if (!empty($eventos)): ?>
