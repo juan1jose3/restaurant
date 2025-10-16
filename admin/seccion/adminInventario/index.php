@@ -136,6 +136,7 @@ if (isset($_POST["aceptar"])) {
                                     <td><?php echo $item["nombreProducto"] ?></td>
                                     <td><?php echo $item["cantidad"] ?></td>
                                     <td><?php echo $item["proveedor"] ?></td>
+                                    
 
 
                                 </tbody>
