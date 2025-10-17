@@ -68,7 +68,7 @@ if (isset($_POST["aceptar"])) {
 
 <body>
     <header>
-        <!-- place navbar here -->
+        <?php include("../../templates/header.php"); ?>
     </header>
 
     <main>

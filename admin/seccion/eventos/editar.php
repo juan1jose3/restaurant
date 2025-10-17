@@ -3,58 +3,42 @@ include("../../templates/header.php");
 include("../../bd.php");
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $id = isset($_POST['id']) ? $_POST['id'] : "";
-    $titulo = isset($_POST['titulo']) ? $_POST['titulo'] : "";
-    $fecha = isset($_POST['fecha']) ? $_POST['fecha'] : "";
-    $descripcion = isset($_POST['descripcion']) ? $_POST['descripcion'] : "";
+    $id = $_POST['id'] ?? "";
+    $titulo = $_POST['titulo'] ?? "";
+    $fecha = $_POST['fecha'] ?? "";
+    $descripcion = $_POST['descripcion'] ?? "";
 
-    // Imagen
-    $imagen = $_FILES['imagen']['name'] ?? "";
-    $rutaImagen = "";
+    $query = $pdo->prepare("SELECT imagen FROM eventos WHERE id = :id");
+    $query->bindParam(':id', $id);
+    $query->execute();
+    $oldData = $query->fetch(PDO::FETCH_ASSOC);
+    $oldImagePath = $oldData ? $oldData['imagen'] : null;
 
-    if ($imagen != "") {
-        $nombreArchivo = time() . "_" . $imagen;
-        $rutaDestino = __DIR__ . "/../../../uploads/eventos/" . $nombreArchivo;
-
-        if (move_uploaded_file($_FILES["imagen"]["tmp_name"], $rutaDestino)) {
-            $rutaImagen = "uploads/eventos/" . $nombreArchivo;
+    $rutaImagen = $oldImagePath;
+    if (!empty($_FILES['imagen']['tmp_name']) && $_FILES['imagen']['error'] === 0) {
+        $nombreArchivo = time() . "_" . basename($_FILES['imagen']['name']);
+        $rutaDestinoServidor = __DIR__ . "/../../../uploads/eventos/" . $nombreArchivo;
+        $rutaDestinoWeb = "uploads/eventos/" . $nombreArchivo;
+        if (move_uploaded_file($_FILES["imagen"]["tmp_name"], $rutaDestinoServidor)) {
+            $rutaImagen = $rutaDestinoWeb;
+            if ($oldImagePath && file_exists(__DIR__ . "/../../../" . $oldImagePath)) {
+                unlink(__DIR__ . "/../../../" . $oldImagePath);
+            }
         }
     }
 
-    try {
-        if ($rutaImagen != "") {
-            // Actualiza también la imagen
-            $stmt = $pdo->prepare("UPDATE eventos 
-                                   SET titulo = :titulo, 
-                                       fecha = :fecha, 
-                                       descripcion = :descripcion, 
-                                       imagen = :imagen 
-                                   WHERE id = :id");
-            $stmt->bindParam(':imagen', $rutaImagen);
-        } else {
-            // Mantiene la imagen existente
-            $stmt = $pdo->prepare("UPDATE eventos 
-                                   SET titulo = :titulo, 
-                                       fecha = :fecha, 
-                                       descripcion = :descripcion 
-                                   WHERE id = :id");
-        }
-
-        $stmt->bindParam(':titulo', $titulo);
-        $stmt->bindParam(':fecha', $fecha);
-        $stmt->bindParam(':descripcion', $descripcion);
-        $stmt->bindParam(':id', $id);
-        $stmt->execute();
-
-        header("Location: index.php");
-        exit;
-    } catch (PDOException $e) {
-        echo "Error al actualizar: " . $e->getMessage();
-    }
+    $stmt = $pdo->prepare("UPDATE eventos SET titulo=:titulo, fecha=:fecha, descripcion=:descripcion, imagen=:imagen WHERE id=:id");
+    $stmt->bindParam(':titulo', $titulo);
+    $stmt->bindParam(':fecha', $fecha);
+    $stmt->bindParam(':descripcion', $descripcion);
+    $stmt->bindParam(':imagen', $rutaImagen);
+    $stmt->bindParam(':id', $id);
+    $stmt->execute();
+    header("Location: index.php");
+    exit;
 }
 
-// --- Cargar datos actuales ---
-$id = isset($_GET['txtID']) ? $_GET['txtID'] : '';
+$id = $_GET['txtID'] ?? '';
 $titulo = $fecha = $descripcion = $imagen = "";
 
 if ($id) {
@@ -62,7 +46,6 @@ if ($id) {
     $select->bindParam(':id', $id);
     $select->execute();
     $row = $select->fetch(PDO::FETCH_ASSOC);
-
     if ($row) {
         $titulo = $row['titulo'];
         $fecha = $row['fecha'];

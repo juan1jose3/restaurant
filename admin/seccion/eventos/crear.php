@@ -1,4 +1,6 @@
 <?php
+
+
 include("../../bd.php");
 include("../../templates/header.php");
 
@@ -7,9 +9,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $fecha = $_POST["fecha"];
     $descripcion = $_POST["descripcion"];
 
- 
+
     $carpetaServidor = __DIR__ . "/../../../uploads/eventos/";
-    
+
     $carpetaWeb = "uploads/eventos/";
 
 
@@ -17,13 +19,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         mkdir($carpetaServidor, 0777, true);
     }
 
-    
+
     $nombreImagen = time() . "_" . basename($_FILES["imagen"]["name"]);
     $rutaDestinoServidor = $carpetaServidor . $nombreImagen;
     $rutaDestinoWeb = $carpetaWeb . $nombreImagen;
 
 
-   
+
+    echo "<pre>";
+    print_r($_FILES["imagen"]);
+    echo "</pre>";
+
+    echo "Ruta destino: $rutaDestinoServidor<br>";
+    echo "Existe carpeta: " . (file_exists($carpetaServidor) ? "Sí" : "No") . "<br>";
 
 
     if (move_uploaded_file($_FILES["imagen"]["tmp_name"], $rutaDestinoServidor)) {
@@ -33,7 +41,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $sentencia->bindParam(":titulo", $titulo);
         $sentencia->bindParam(":fecha", $fecha);
         $sentencia->bindParam(":descripcion", $descripcion);
-        $sentencia->bindParam(":imagen", $rutaDestinoWeb); 
+        $sentencia->bindParam(":imagen", $rutaDestinoWeb);
         $sentencia->execute();
 
         header("Location:index.php");

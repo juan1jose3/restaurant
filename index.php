@@ -1,5 +1,6 @@
 <?php
 include("admin/bd.php");
+session_start();
 $query = "SELECT * FROM eventos";
 $resultado = $pdo->query($query);
 
@@ -51,6 +52,67 @@ foreach ($reservasActivas as $reserva) {
     $col = ($reserva['mesa'] - 1) % $columnas;
     $mesasArray[$fila][$col] = 1;
 }
+
+
+// arbol
+
+$arbol = [
+    "pregunta" => "¿Te sientes con buen ánimo hoy?",
+    "si" => [
+        "pregunta" => "¿Tienes mucha energía?",
+        "si" => [
+            "pregunta" => "¿Prefieres algo salado?",
+            "si" => ["sugerencia" => "Carne asada con papas y jugo natural"],
+            "no" => ["sugerencia" => "Ensalada fresca con frutas y agua de coco"]
+        ],
+        "no" => [
+            "pregunta" => "¿Te gustaría algo ligero?",
+            "si" => ["sugerencia" => "Wrap de pollo con jugo natural"],
+            "no" => ["sugerencia" => "Pasta al pesto con pan de ajo"]
+        ]
+    ],
+    "no" => [
+        "pregunta" => "¿Te sientes estresado?",
+        "si" => [
+            "pregunta" => "¿Quieres algo dulce?",
+            "si" => ["sugerencia" => "Postre de chocolate o tiramisú"],
+            "no" => ["sugerencia" => "Sopa de tomate con queso fundido"]
+        ],
+        "no" => [
+            "pregunta" => "¿Tienes hambre pero estás cansado?",
+            "si" => ["sugerencia" => "Pasta cremosa con champiñones"],
+            "no" => ["sugerencia" => "Sopa caliente de verduras"]
+        ]
+    ]
+];
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion'])) {
+    if (!isset($_SESSION['nodo'])) $_SESSION['nodo'] = $arbol;
+
+    $nodoActual = $_SESSION['nodo'];
+    $accion = $_POST['accion'];
+
+    if ($accion === 'reiniciar') {
+        $_SESSION['nodo'] = $arbol;
+        $nodoActual = $_SESSION['nodo'];
+    } elseif ($accion === 'respuesta' && isset($_POST['respuesta'])) {
+        $respuesta = $_POST['respuesta'];
+        if (isset($nodoActual[$respuesta])) {
+            $_SESSION['nodo'] = $nodoActual[$respuesta];
+            $nodoActual = $_SESSION['nodo'];
+        }
+    }
+
+    header('Content-Type: application/json; charset=utf-8');
+    if (isset($nodoActual['sugerencia'])) {
+        echo json_encode(["sugerencia" => $nodoActual['sugerencia']]);
+    } else {
+        echo json_encode(["pregunta" => $nodoActual['pregunta']]);
+    }
+    exit;
+}
+
+
 ?>
 
 
@@ -254,32 +316,90 @@ foreach ($reservasActivas as $reserva) {
 
     </section>
 
-    <section id="menu">
-        <div class="container">
-            <h2 class="text-center">Recomendados</h2>
-            <br>
-            <div class="row row-cols-1 row-cols-md-3 g-4">
-                <?php foreach ($menuLista as $menu): ?>
-                    <div class="col d-flex justify-content-center">
-
-                        <div class="card h-100">
-                            <img src="images/<?php echo $menu["foto"] ?>" alt="Bandeja Paisa" class="card-img-top rounded-3">
-                            <div class="card-body">
-                                <h5 class="card-title"><?php echo $menu["nombre"] ?></h5>
-                                <p class="card-text small"><strong>Ingredientes: </strong><?php echo $menu["ingredientes"] ?></p>
-                                <p class="card-text"><strong>Precio: </strong><?php echo $menu["precio"] ?><strong>$</strong></p>
-                            </div>
+   <section id="menu">
+    <div class="container">
+        <h2 class="text-center">Recomendados</h2>
+        <br>
+        <div class="row row-cols-1 row-cols-md-3 g-4">
+            <?php foreach ($menuLista as $menu): ?>
+                <div class="col d-flex justify-content-center">
+                    <div class="card h-100">
+                        <?php 
+                        $imgPath = $menu['foto'] ? "/restaurant/" . $menu['foto'] : "/restaurant/uploads/menu/default.jpg";
+                        ?>
+                        <img src="<?php echo htmlspecialchars($imgPath); ?>" 
+                             alt="<?php echo htmlspecialchars($menu['nombre']); ?>" 
+                             class="card-img-top rounded-3">
+                        <div class="card-body">
+                            <h5 class="card-title"><?php echo htmlspecialchars($menu["nombre"]); ?></h5>
+                            <p class="card-text small"><strong>Ingredientes: </strong><?php echo htmlspecialchars($menu["ingredientes"]); ?></p>
+                            <p class="card-text"><strong>Precio: </strong><?php echo htmlspecialchars($menu["precio"]); ?><strong>$</strong></p>
                         </div>
-
-
                     </div>
-                <?php endforeach ?>
-
-            </div>
-
+                </div>
+            <?php endforeach; ?>
         </div>
+    </div>
+</section>
 
-    </section>
+<section id="sugerencias" class="container my-5">
+    <h2 class="text-center mb-4">¿No sabes qué comer? Te ayudamos</h2>
+    <div id="arbol" class="card p-4 text-center">
+        <p id="texto" class="fs-4">¿Te sientes con buen ánimo hoy?</p>
+        <div id="botones">
+            <button class="btn btn-success mx-2" onclick="responder('si')">Sí</button>
+            <button class="btn btn-danger mx-2" onclick="responder('no')">No</button>
+        </div>
+    </div>
+</section>
+
+<script>
+function responder(resp) {
+    const formData = new URLSearchParams();
+    formData.append('accion', 'respuesta');
+    formData.append('respuesta', resp);
+
+    fetch(window.location.pathname, {
+        method: 'POST',
+        body: formData
+    })
+    .then(r => r.json())
+    .then(data => actualizarVista(data))
+    .catch(() => alert('Error al comunicar con el servidor.'));
+}
+
+function reiniciar() {
+    const formData = new URLSearchParams();
+    formData.append('accion', 'reiniciar');
+
+    fetch(window.location.pathname, {
+        method: 'POST',
+        body: formData
+    })
+    .then(r => r.json())
+    .then(data => actualizarVista(data))
+    .catch(() => alert('Error al comunicar con el servidor.'));
+}
+
+function actualizarVista(data) {
+    const texto = document.getElementById('texto');
+    const botones = document.getElementById('botones');
+
+    if (data.sugerencia) {
+        texto.textContent = data.sugerencia;
+        botones.innerHTML = `<button class="btn btn-secondary" onclick="reiniciar()">Volver a empezar</button>`;
+    } else if (data.pregunta) {
+        texto.textContent = data.pregunta;
+        botones.innerHTML = `
+            <button class="btn btn-success mx-2" onclick="responder('si')">Sí</button>
+            <button class="btn btn-danger mx-2" onclick="responder('no')">No</button>
+        `;
+    }
+}
+</script>
+
+
+
 
     <section id="Horarios" class="ms-4 mt-4">
         <h2 style="text-align: center;">Horarios de atención</h2>
