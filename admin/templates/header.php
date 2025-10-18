@@ -19,8 +19,8 @@
                     <a class="nav-item nav-link" href="<?php echo $url_base;?>/seccion/usuarios/">Usuarios</a>
                     <a class="nav-item nav-link" href="<?php echo $url_base;?>/seccion/comentarios/">Comentarios</a>
                     <a class="nav-item nav-link" href="<?php echo $url_base;?>/seccion/reservas/">Reservas</a>
-                    <a class="nav-item nav-link" href="<?php echo $url_base;?>/seccion/adminInventario/">Cola inventario</a>
-                    <a class="nav-item nav-link" href="#">Cerrar sesion</a>
+                    <a class="nav-item nav-link" href="<?php echo $url_base;?>/seccion/adminInventario/"><i class="bi bi-list-ul"></i></a>
+                    
                     <a class="nav-item nav-link" href="<?php echo $url_base;?>/seccion/noti/"><i class="bi bi-bell"></i></a>
                 </div>
              </nav>
