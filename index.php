@@ -112,6 +112,49 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion'])) {
     exit;
 }
 
+// grafó
+
+$clientes = [
+    ["id" => 1, "nombre" => "María López"],
+    ["id" => 2, "nombre" => "Carlos Pérez"],
+    ["id" => 3, "nombre" => "Ana Gómez"],
+    ["id" => 4, "nombre" => "Antonio"],
+    ["id" => 5, "nombre" => "pepe12"],
+    ["id" => 6, "nombre" => "Luis34"]
+];
+
+$chefs = [
+    ["id" => 7, "nombre" => "Gordon Ramsay"],
+    ["id" => 8, "nombre" => "Massimo Bottura"],
+    ["id" => 9, "nombre" => "Dominique Crenn"]
+];
+
+
+$enlaces = [
+    ["from" => 1, "to" => 7],
+    ["from" => 1, "to" => 8],
+    ["from" => 2, "to" => 7],
+    ["from" => 2, "to" => 9],
+    ["from" => 3, "to" => 8],
+    ["from" => 3, "to" => 9],
+    ["from" => 4, "to" => 7],
+    ["from" => 4, "to" => 8],
+    ["from" => 5, "to" => 9],
+    ["from" => 5, "to" => 8],
+    ["from" => 6, "to" => 7],
+    ["from" => 6, "to" => 9],
+
+    ["from" => 7, "to" => 8],
+    ["from" => 8, "to" => 9],
+    ["from" => 9, "to" => 7]
+];
+
+$datos = [
+    "clientes" => $clientes,
+    "chefs" => $chefs,
+    "enlaces" => $enlaces
+];
+
 
 ?>
 
@@ -156,7 +199,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion'])) {
                     </li>
 
                     <li class="nav-item">
-                         <a class="nav-item nav-link active" href="#evento-destacado" aria-current="page">Eventos<span class="visually-hidden">(current)</span></a>
+                        <a class="nav-item nav-link active" href="#evento-destacado" aria-current="page">Eventos<span class="visually-hidden">(current)</span></a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="#Chef">Chef</a>
@@ -171,7 +214,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion'])) {
                     </li>
 
                     <li class="nav-item">
-                         <a class="nav-item nav-link active" href="#mapa-mesas" aria-current="page">Reservas<span class="visually-hidden">(current)</span></a>
+                        <a class="nav-item nav-link active" href="#mapa-mesas" aria-current="page">Reservas<span class="visually-hidden">(current)</span></a>
                     </li>
 
                     <li class="nav-item">
@@ -202,7 +245,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion'])) {
         </div>
 
     </section>
-    
+
 
 
     <?php if (!empty($eventos)): ?>
@@ -289,6 +332,107 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion'])) {
     </section>
 
 
+    <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+    <link href="https://unpkg.com/vis-network/styles/vis-network.css" rel="stylesheet" />
+
+    <section id="grafo-social" class="py-5">
+        <div class="container text-center">
+            <h2 class="mb-4" style="color:#00ffe0;">🌐 Grafo Social</h2>
+            <p class="text-muted">Relaciones entre clientes y chefs</p>
+            <div id="network" style="width:100%; height:600px; background:#1a1a1a; border-radius:12px;"></div>
+        </div>
+    </section>
+
+    <script>
+        const datos = <?php echo json_encode($datos); ?>;
+
+        // Crear nodos
+        const nodes = new vis.DataSet([
+            ...datos.clientes.map(c => ({
+                id: c.id,
+                label: c.nombre,
+                group: "cliente"
+            })),
+            ...datos.chefs.map(ch => ({
+                id: ch.id,
+                label: ch.nombre,
+                group: "chef"
+            }))
+        ]);
+
+        // Crear enlaces
+        const edges = new vis.DataSet(datos.enlaces);
+
+        // Configuración visual
+        const container = document.getElementById("network");
+        const data = {
+            nodes,
+            edges
+        };
+
+        const options = {
+            nodes: {
+                shape: "dot",
+                size: 20,
+                font: {
+                    color: "#fff",
+                    size: 14
+                },
+                borderWidth: 2
+            },
+            groups: {
+                cliente: {
+                    color: {
+                        background: "#00ffe0",
+                        border: "#00ffe0"
+                    }
+                },
+                chef: {
+                    color: {
+                        background: "#ff6600",
+                        border: "#ff6600"
+                    }
+                }
+            },
+            edges: {
+                color: {
+                    color: "#aaa"
+                },
+                width: 2,
+                smooth: {
+                    type: "dynamic"
+                }
+            },
+            layout: {
+                improvedLayout: true
+            },
+            physics: {
+                enabled: true,
+                barnesHut: {
+                    gravitationalConstant: -4000, // mantiene unión sin amontonarse
+                    centralGravity: 0.4, // mantiene cohesión
+                    springLength: 200, // separa nodos
+                    springConstant: 0.05, // suaviza conexiones
+                    damping: 0.2
+                },
+                stabilization: {
+                    iterations: 300
+                }
+            },
+            interaction: {
+                hover: true,
+                dragNodes: true,
+                zoomView: true
+            }
+        };
+
+        new vis.Network(container, data, options);
+    </script>
+
+
+
+
+
     <section id="testimonios" class="bg-light py-5">
         <div class="container">
 
@@ -316,87 +460,87 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion'])) {
 
     </section>
 
-   <section id="menu">
-    <div class="container">
-        <h2 class="text-center">Recomendados</h2>
-        <br>
-        <div class="row row-cols-1 row-cols-md-3 g-4">
-            <?php foreach ($menuLista as $menu): ?>
-                <div class="col d-flex justify-content-center">
-                    <div class="card h-100">
-                        <?php 
-                        $imgPath = $menu['foto'] ? "/restaurant/" . $menu['foto'] : "/restaurant/uploads/menu/default.jpg";
-                        ?>
-                        <img src="<?php echo htmlspecialchars($imgPath); ?>" 
-                             alt="<?php echo htmlspecialchars($menu['nombre']); ?>" 
-                             class="card-img-top rounded-3">
-                        <div class="card-body">
-                            <h5 class="card-title"><?php echo htmlspecialchars($menu["nombre"]); ?></h5>
-                            <p class="card-text small"><strong>Ingredientes: </strong><?php echo htmlspecialchars($menu["ingredientes"]); ?></p>
-                            <p class="card-text"><strong>Precio: </strong><?php echo htmlspecialchars($menu["precio"]); ?><strong>$</strong></p>
+    <section id="menu">
+        <div class="container">
+            <h2 class="text-center">Recomendados</h2>
+            <br>
+            <div class="row row-cols-1 row-cols-md-3 g-4">
+                <?php foreach ($menuLista as $menu): ?>
+                    <div class="col d-flex justify-content-center">
+                        <div class="card h-100">
+                            <?php
+                            $imgPath = $menu['foto'] ? "/restaurant/" . $menu['foto'] : "/restaurant/uploads/menu/default.jpg";
+                            ?>
+                            <img src="<?php echo htmlspecialchars($imgPath); ?>"
+                                alt="<?php echo htmlspecialchars($menu['nombre']); ?>"
+                                class="card-img-top rounded-3">
+                            <div class="card-body">
+                                <h5 class="card-title"><?php echo htmlspecialchars($menu["nombre"]); ?></h5>
+                                <p class="card-text small"><strong>Ingredientes: </strong><?php echo htmlspecialchars($menu["ingredientes"]); ?></p>
+                                <p class="card-text"><strong>Precio: </strong><?php echo htmlspecialchars($menu["precio"]); ?><strong>$</strong></p>
+                            </div>
                         </div>
                     </div>
-                </div>
-            <?php endforeach; ?>
+                <?php endforeach; ?>
+            </div>
         </div>
-    </div>
-</section>
+    </section>
 
-<section id="sugerencias" class="container my-5">
-    <h2 class="text-center mb-4">¿No sabes qué comer? Te ayudamos</h2>
-    <div id="arbol" class="card p-4 text-center">
-        <p id="texto" class="fs-4">¿Te sientes con buen ánimo hoy?</p>
-        <div id="botones">
-            <button class="btn btn-success mx-2" onclick="responder('si')">Sí</button>
-            <button class="btn btn-danger mx-2" onclick="responder('no')">No</button>
+    <section id="sugerencias" class="container my-5">
+        <h2 class="text-center mb-4">¿No sabes qué comer? Te ayudamos</h2>
+        <div id="arbol" class="card p-4 text-center">
+            <p id="texto" class="fs-4">¿Te sientes con buen ánimo hoy?</p>
+            <div id="botones">
+                <button class="btn btn-success mx-2" onclick="responder('si')">Sí</button>
+                <button class="btn btn-danger mx-2" onclick="responder('no')">No</button>
+            </div>
         </div>
-    </div>
-</section>
+    </section>
 
-<script>
-function responder(resp) {
-    const formData = new URLSearchParams();
-    formData.append('accion', 'respuesta');
-    formData.append('respuesta', resp);
+    <script>
+        function responder(resp) {
+            const formData = new URLSearchParams();
+            formData.append('accion', 'respuesta');
+            formData.append('respuesta', resp);
 
-    fetch(window.location.pathname, {
-        method: 'POST',
-        body: formData
-    })
-    .then(r => r.json())
-    .then(data => actualizarVista(data))
-    .catch(() => alert('Error al comunicar con el servidor.'));
-}
+            fetch(window.location.pathname, {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(r => r.json())
+                .then(data => actualizarVista(data))
+                .catch(() => alert('Error al comunicar con el servidor.'));
+        }
 
-function reiniciar() {
-    const formData = new URLSearchParams();
-    formData.append('accion', 'reiniciar');
+        function reiniciar() {
+            const formData = new URLSearchParams();
+            formData.append('accion', 'reiniciar');
 
-    fetch(window.location.pathname, {
-        method: 'POST',
-        body: formData
-    })
-    .then(r => r.json())
-    .then(data => actualizarVista(data))
-    .catch(() => alert('Error al comunicar con el servidor.'));
-}
+            fetch(window.location.pathname, {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(r => r.json())
+                .then(data => actualizarVista(data))
+                .catch(() => alert('Error al comunicar con el servidor.'));
+        }
 
-function actualizarVista(data) {
-    const texto = document.getElementById('texto');
-    const botones = document.getElementById('botones');
+        function actualizarVista(data) {
+            const texto = document.getElementById('texto');
+            const botones = document.getElementById('botones');
 
-    if (data.sugerencia) {
-        texto.textContent = data.sugerencia;
-        botones.innerHTML = `<button class="btn btn-secondary" onclick="reiniciar()">Volver a empezar</button>`;
-    } else if (data.pregunta) {
-        texto.textContent = data.pregunta;
-        botones.innerHTML = `
+            if (data.sugerencia) {
+                texto.textContent = data.sugerencia;
+                botones.innerHTML = `<button class="btn btn-secondary" onclick="reiniciar()">Volver a empezar</button>`;
+            } else if (data.pregunta) {
+                texto.textContent = data.pregunta;
+                botones.innerHTML = `
             <button class="btn btn-success mx-2" onclick="responder('si')">Sí</button>
             <button class="btn btn-danger mx-2" onclick="responder('no')">No</button>
         `;
-    }
-}
-</script>
+            }
+        }
+    </script>
 
 
 
